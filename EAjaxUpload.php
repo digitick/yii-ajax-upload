@@ -10,91 +10,73 @@
  */
 
 /**
-  How to use:
-
-  view:
-  $this->widget('ext.EAjaxUpload.EAjaxUpload',
-  array(
-  'id'=>'uploadFile',
-  'config'=>array(
-  'action'=>'/controller/upload',
-  'allowedExtensions'=>array("jpg"),//array("jpg","jpeg","gif","exe","mov" and etc...
-  'sizeLimit'=>10*1024*1024,// maximum file size in bytes
-  'minSizeLimit'=>10*1024*1024,// minimum file size in bytes
-  'onComplete'=>"js:function(id, fileName, responseJSON){ alert(fileName); }",
-  //'messages'=>array(
-  //                  'typeError'=>"{file} has invalid extension. Only {extensions} are allowed.",
-  //                  'sizeError'=>"{file} is too large, maximum file size is {sizeLimit}.",
-  //                  'minSizeError'=>"{file} is too small, minimum file size is {minSizeLimit}.",
-  //                  'emptyError'=>"{file} is empty, please select files again without it.",
-  //                  'onLeave'=>"The files are being uploaded, if you leave now the upload will be cancelled."
-  //                 ),
-  //'showMessage'=>"js:function(message){ alert(message); }"
-  )
-  ));
-
-  controller:
-
-  public function actionUpload()
-  {
-  Yii::import("ext.EAjaxUpload.qqFileUploader");
-
-  $folder='upload/';// folder for uploaded files
-  $allowedExtensions = array("jpg"),//array("jpg","jpeg","gif","exe","mov" and etc...
-  $sizeLimit = 10 * 1024 * 1024;// maximum file size in bytes
-  $uploader = new qqFileUploader($allowedExtensions, $sizeLimit);
-  $result = $uploader->handleUpload($folder);
-  $result=htmlspecialchars(json_encode($result), ENT_NOQUOTES);
-  echo $result;// it's array
-  }
-
+ * EAjaxUpload file upload widget.
  */
 class EAjaxUpload extends CWidget
 {
-	public $id = "fileUploader";
+	const VERSION = '3.3.0';
+
+	public $id = 'fileUploader';
 	public $postParams = array();
 	public $config = array();
+	public $action;
+	public $allowedExtensions = array();
+	public $sizeLimit;
+	public $minSizeLimit = 0;
 	public $css = null;
 
 	public function run()
 	{
-		if (empty($this->config['action'])) {
-			throw new CException('EAjaxUpload: param "action" cannot be empty.');
+		if (!$this->action) {
+			throw new CException('EAjaxUpload: "action" cannot be empty.');
 		}
 
-		if (empty($this->config['allowedExtensions'])) {
-			throw new CException('EAjaxUpload: param "allowedExtensions" cannot be empty.');
+		if (empty($this->allowedExtensions)) {
+			throw new CException('EAjaxUpload: "allowedExtensions" cannot be empty.');
 		}
 
-		if (empty($this->config['sizeLimit'])) {
-			throw new CException('EAjaxUpload: param "sizeLimit" cannot be empty.');
+		if (!$this->sizeLimit) {
+			throw new CException('EAjaxUpload: "sizeLimit" cannot be empty.');
 		}
-
-		unset($this->config['element']);
 
 		echo '<div id="' . $this->id . '"><noscript><p>Please enable JavaScript to use file uploader.</p></noscript></div>';
+
 		$assets = dirname(__FILE__) . '/assets';
 		$baseUrl = Yii::app()->assetManager->publish($assets);
 
-		Yii::app()->clientScript->registerScriptFile($baseUrl . '/fileuploader.js', CClientScript::POS_HEAD);
+		$cs = Yii::app()->getClientScript();
+		$cs->registerScriptFile($baseUrl . '/jquery.fineuploader-' . self::VERSION . '.js', CClientScript::POS_HEAD);
 
-		$this->css = (!empty($this->css)) ? $this->css : $baseUrl . '/fileuploader.css';
-		Yii::app()->clientScript->registerCssFile($this->css);
+		$this->css = (!empty($this->css)) ? $this->css : $baseUrl . '/fineuploader-' . self::VERSION . '.css';
+		$cs->registerCssFile($this->css);
 
-		$postParams = array('PHPSESSID' => session_id(), 'YII_CSRF_TOKEN' => Yii::app()->request->csrfToken);
-		if (isset($this->postParams)) {
+		$postParams = array(
+			'PHPSESSID' => Yii::app()->session->sessionID,
+			'YII_CSRF_TOKEN' => Yii::app()->request->csrfToken
+		);
+		if (!empty($this->postParams)) {
 			$postParams = array_merge($postParams, $this->postParams);
 		}
 
-		$config = array(
-			'element' => 'js:document.getElementById("' . $this->id . '")',
-			'debug' => false,
-			'multiple' => false
+		$configArray = array(
+			'request' => array(
+				'endpoint' => $this->action,
+				'paramsInBody' => false,
+				'params' => $postParams,
+			),
+			'debug' => YII_DEBUG,
+			'multiple' => false,
+			'validation' => array(
+				'allowedExtensions' => $this->allowedExtensions,
+				'sizeLimit' => $this->sizeLimit,
+				'minSizeLimit' => $this->minSizeLimit,
+			),
+			
 		);
-		$config = array_merge($config, $this->config);
-		$config['params'] = $postParams;
-		$config = CJavaScript::encode($config);
-		Yii::app()->getClientScript()->registerScript("FileUploader_" . $this->id, "var FileUploader_" . $this->id . " = new qq.FileUploader($config); ", CClientScript::POS_LOAD);
+		$config = CJavaScript::encode(array_merge($configArray, $this->config));
+
+		$script = " $('#{$this->id}').fineUploader($config);";
+		$cs->registerScript('FileUploader_' . $this->id, $script, CClientScript::POS_READY);
 	}
 
 }
