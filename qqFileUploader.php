@@ -145,32 +145,32 @@ class qqFileUploader
 
 	/**
 	 *
-	 * @param EMongoGridFS $mongoImage
+	 * @param EMongoGridFS $mongoFile
 	 * @param string $filename
 	 * @param boolean $replaceOldFile 
 	 */
-	protected function saveToMongo(EMongoGridFS $mongoImage, $filename, $replaceOldFile)
+	protected function saveToMongo(EMongoGridFS $mongoFile, $filename, $replaceOldFile)
 	{
 		$handle = fopen('php://input', 'rb');
 		$bytes = stream_get_contents($handle);
 		fclose($handle);
 
-		$mongoImage->setBytes($bytes);
+		$mongoFile->setBytes($bytes);
 
 		$finfo = new finfo();
-		$mongoImage->contentType = $finfo->buffer($bytes, FILEINFO_MIME_TYPE);
+		$mongoFile->contentType = $finfo->buffer($bytes, FILEINFO_MIME_TYPE);
 
-		$mongoImage->filename = $filename;
+		$mongoFile->filename = $filename;
 
 		if (!$replaceOldFile)
-			$mongoImage->insert();
+			$mongoFile->insert();
 		else
-			$mongoImage->save();
+			$mongoFile->save();
 
 		return array(
 			'success' => true,
 			'filename' => $filename,
-			'mongoId' => $mongoImage->_id->{'$id'}
+			'mongoId' => $mongoFile->_id->{'$id'}
 		);
 	}
 
