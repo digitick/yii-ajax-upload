@@ -17,7 +17,7 @@ class EAjaxUpload extends CWidget
 	const VERSION = '3.3.0';
 
 	public $id = 'fileUploader';
-	public $postParams = array();
+	public $params = array();
 	public $config = array();
 	public $action;
 	public $allowedExtensions = array();
@@ -50,19 +50,19 @@ class EAjaxUpload extends CWidget
 		$this->css = (!empty($this->css)) ? $this->css : $baseUrl . '/fineuploader-' . self::VERSION . '.css';
 		$cs->registerCssFile($this->css);
 
-		$postParams = array(
+		$params = array(
 			'PHPSESSID' => Yii::app()->session->sessionID,
 			'YII_CSRF_TOKEN' => Yii::app()->request->csrfToken
 		);
-		if (!empty($this->postParams)) {
-			$postParams = array_merge($postParams, $this->postParams);
+		if (!empty($this->params)) {
+			$params = array_merge($params, $this->params);
 		}
 
 		$configArray = array(
 			'request' => array(
 				'endpoint' => $this->action,
 				'paramsInBody' => false,
-				'params' => $postParams,
+				'params' => $params,
 			),
 			'debug' => YII_DEBUG,
 			'multiple' => false,
@@ -71,7 +71,6 @@ class EAjaxUpload extends CWidget
 				'sizeLimit' => $this->sizeLimit,
 				'minSizeLimit' => $this->minSizeLimit,
 			),
-			
 		);
 		$config = CJavaScript::encode(array_merge($configArray, $this->config));
 
