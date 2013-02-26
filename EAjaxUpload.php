@@ -22,8 +22,8 @@ class EAjaxUpload extends CWidget
 	public $action;
 	public $allowedExtensions = array();
 	public $sizeLimit;
-	public $minSizeLimit = 0;
-	public $css = null;
+	public $minSizeLimit = 1;
+	public $css;
 
 	public function run()
 	{
