@@ -19,24 +19,20 @@ class EAjaxUpload extends CWidget
 	public $id = 'fileUploader';
 	public $params = array();
 	public $config = array();
-	public $action;
-	public $allowedExtensions = array();
-	public $sizeLimit;
-	public $minSizeLimit = 1;
 	public $css;
 
 	public function run()
 	{
-		if (!$this->action) {
-			throw new CException('EAjaxUpload: "action" cannot be empty.');
+		if (!$this->config['request']['endpoint']) {
+			throw new CException('EAjaxUpload: config["request"]["endpoint"] cannot be empty.');
 		}
 
-		if (empty($this->allowedExtensions)) {
-			throw new CException('EAjaxUpload: "allowedExtensions" cannot be empty.');
+		if (empty($this->config['validation']['allowedExtensions'])) {
+			throw new CException('EAjaxUpload: config["validation"]["allowedExtensions"] cannot be empty.');
 		}
 
-		if (!$this->sizeLimit) {
-			throw new CException('EAjaxUpload: "sizeLimit" cannot be empty.');
+		if (!$this->config['validation']['sizeLimit']) {
+			throw new CException('EAjaxUpload: config["validation"]["sizeLimit"] cannot be empty.');
 		}
 
 		echo '<div id="' . $this->id . '"><noscript><p>Please enable JavaScript to use file uploader.</p></noscript></div>';
@@ -60,28 +56,24 @@ class EAjaxUpload extends CWidget
 			'PHPSESSID' => Yii::app()->session->sessionID,
 			'YII_CSRF_TOKEN' => Yii::app()->request->csrfToken
 		);
-		if (!empty($this->params)) {
-			$params = array_merge($params, $this->params);
+		if (isset($this->config['request']['params'])) {
+			$params = array_merge($params, $this->config['request']['params']);
 		}
+		unset($this->config['request']['params']);
 
 		$configArray = array(
+			'element' => "js:$('#{$this->id}')[0]",
 			'request' => array(
-				'endpoint' => $this->action,
 				'paramsInBody' => false,
 				'params' => $params,
 			),
 			'debug' => YII_DEBUG,
 			'multiple' => false,
-			'validation' => array(
-				'allowedExtensions' => $this->allowedExtensions,
-				'sizeLimit' => $this->sizeLimit,
-				'minSizeLimit' => $this->minSizeLimit,
-			),
 		);
-		$config = CJavaScript::encode(array_merge($configArray, $this->config));
+		$config = CJavaScript::encode(CMap::mergeArray($configArray, $this->config));
 
-		$script = " $('#{$this->id}').fineUploader($config);";
-		$cs->registerScript('FileUploader_' . $this->id, $script, CClientScript::POS_READY);
+		$script = "var qq_{$this->id} = new qq.FineUploader($config);";
+		$cs->registerScript('FineUploader_' . $this->id, $script, CClientScript::POS_READY);
 	}
 
 }
