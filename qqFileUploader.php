@@ -28,11 +28,19 @@ class qqUploadedFileXhr
 		return true;
 	}
 
+	/**
+	 * Get the original filename
+	 * @return string filename
+	 */
 	function getName()
 	{
 		return $_GET['qqfile'];
 	}
 
+	/**
+	 * Get the file size
+	 * @return integer file-size in byte
+	 */
 	function getSize()
 	{
 		if (isset($_SERVER['CONTENT_LENGTH']))
@@ -60,11 +68,19 @@ class qqUploadedFileForm
 		return true;
 	}
 
+	/**
+	 * Get the original filename
+	 * @return string filename
+	 */
 	function getName()
 	{
 		return $_FILES['qqfile']['name'];
 	}
 
+	/**
+	 * Get the file size
+	 * @return integer file-size in byte
+	 */
 	function getSize()
 	{
 		return $_FILES['qqfile']['size'];
@@ -72,6 +88,9 @@ class qqUploadedFileForm
 
 }
 
+/**
+ * Class that encapsulates the file-upload internals
+ */
 class qqFileUploader
 {
 	private $allowedExtensions = array();
@@ -93,6 +112,16 @@ class qqFileUploader
 			$this->file = new qqUploadedFileForm();
 		else
 			$this->file = false;
+	}
+
+	/**
+	 * Get the original filename
+	 * @return string filename
+	 */
+	public function getName()
+	{
+		if ($this->file)
+			return $this->file->getName();
 	}
 
 	protected function checkServerSettings()
