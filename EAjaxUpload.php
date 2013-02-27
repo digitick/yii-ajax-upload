@@ -45,7 +45,13 @@ class EAjaxUpload extends CWidget
 		$baseUrl = Yii::app()->assetManager->publish($assets);
 
 		$cs = Yii::app()->getClientScript();
-		$cs->registerScriptFile($baseUrl . '/jquery.fineuploader-' . self::VERSION . '.js', CClientScript::POS_HEAD);
+		
+		if (YII_DEBUG)
+			$js = $baseUrl . '/jquery.fineuploader-' . self::VERSION . '.js';
+		else
+			$js = $baseUrl . '/jquery.fineuploader-' . self::VERSION . '.min.js';
+		
+		$cs->registerScriptFile($js, CClientScript::POS_HEAD);
 
 		$this->css = (!empty($this->css)) ? $this->css : $baseUrl . '/fineuploader-' . self::VERSION . '.css';
 		$cs->registerCssFile($this->css);
