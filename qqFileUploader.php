@@ -1,18 +1,27 @@
 <?php
 
 /**
- * Handle file uploads via XMLHttpRequest
+ * Handle file uploads.
  */
-class qqUploadedFileXhr
+abstract class qqUploadedFile
+{
+	abstract public function getName();
+	abstract public function getSize();
+}
+
+/**
+ * Handle file uploads via XMLHttpRequest.
+ */
+class qqUploadedFileXhr extends qqUploadedFile
 {
 
 	/**
 	 * Save the file to the specified path
 	 * @return boolean TRUE on success
 	 */
-	function save($path)
+	public function save($path)
 	{
-		$input = fopen('php://input', 'r');
+		$input = fopen('php://input', 'rb');
 		$temp = tmpfile();
 		$realSize = stream_copy_to_stream($input, $temp);
 		fclose($input);
@@ -20,7 +29,7 @@ class qqUploadedFileXhr
 		if ($realSize != $this->getSize())
 			return false;
 
-		$target = fopen($path, "w");
+		$target = fopen($path, 'w');
 		fseek($temp, 0, SEEK_SET);
 		stream_copy_to_stream($temp, $target);
 		fclose($target);
@@ -32,7 +41,7 @@ class qqUploadedFileXhr
 	 * Get the original filename
 	 * @return string filename
 	 */
-	function getName()
+	public function getName()
 	{
 		return $_GET['qqfile'];
 	}
@@ -41,7 +50,7 @@ class qqUploadedFileXhr
 	 * Get the file size
 	 * @return integer file-size in byte
 	 */
-	function getSize()
+	public function getSize()
 	{
 		if (isset($_SERVER['CONTENT_LENGTH']))
 			return (int) $_SERVER['CONTENT_LENGTH'];
@@ -52,18 +61,18 @@ class qqUploadedFileXhr
 }
 
 /**
- * Handle file uploads via regular form post (uses the $_FILES array)
+ * Handle file uploads via regular form post (uses the $_FILES array).
  */
-class qqUploadedFileForm
+class qqUploadedFileForm extends qqUploadedFile
 {
 
 	/**
 	 * Save the file to the specified path
 	 * @return boolean TRUE on success
 	 */
-	function save($path)
+	public function save($path)
 	{
-		if (!move_uploaded_file($_FILES['qqfile']['tmp_name'], $path))
+		if (!move_uploaded_file($this->getTempName(), $path))
 			return false;
 		return true;
 	}
@@ -72,16 +81,25 @@ class qqUploadedFileForm
 	 * Get the original filename
 	 * @return string filename
 	 */
-	function getName()
+	public function getName()
 	{
 		return $_FILES['qqfile']['name'];
+	}
+	
+	/**
+	 * Get the temporary location of the file.
+	 * @return string filename
+	 */
+	public function getTempName()
+	{
+		return $_FILES['qqfile']['tmp_name'];
 	}
 
 	/**
 	 * Get the file size
 	 * @return integer file-size in byte
 	 */
-	function getSize()
+	public function getSize()
 	{
 		return $_FILES['qqfile']['size'];
 	}
@@ -93,8 +111,17 @@ class qqUploadedFileForm
  */
 class qqFileUploader
 {
+	/**
+	 * @var array 
+	 */
 	private $allowedExtensions = array();
+	/**
+	 * @var integer
+	 */
 	private $sizeLimit = 10485760;
+	/**
+	 * @var qqUploadedFile
+	 */
 	private $file;
 
 	public function __construct(array $allowedExtensions = array(), $sizeLimit = 10485760)
