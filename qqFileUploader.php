@@ -5,7 +5,9 @@
  */
 abstract class qqUploadedFile
 {
+
 	abstract public function getName();
+
 	abstract public function getSize();
 }
 
@@ -85,7 +87,7 @@ class qqUploadedFileForm extends qqUploadedFile
 	{
 		return $_FILES['qqfile']['name'];
 	}
-	
+
 	/**
 	 * Get the temporary location of the file.
 	 * @return string filename
@@ -207,9 +209,22 @@ class qqFileUploader
 	 */
 	protected function saveToMongo(EMongoGridFS $mongoFile, $filename, $replaceOldFile)
 	{
-		$handle = fopen('php://input', 'rb');
-		$bytes = stream_get_contents($handle);
-		fclose($handle);
+		if ($this->file instanceof qqUploadedFileXhr) {
+			$handle = fopen('php://input', 'rb');
+			$bytes = stream_get_contents($handle);
+			fclose($handle);
+		}
+		elseif ($this->file instanceof qqUploadedFileForm) {
+			$path = $this->file->getTempName();
+			if (is_uploaded_file($path)) {
+				$bytes = file_get_contents($path);
+				unlink($path);
+			}
+			else
+				return array('error' => 'Could not find uploaded file.');
+		}
+		else
+			return array('error' => 'Server error. No valid upload method set.');
 
 		$mongoFile->setBytes($bytes);
 
