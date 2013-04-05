@@ -3,7 +3,7 @@ EAjaxUpload
 
 EAjaxUpload
 
-###Usage
+##Usage
 
 ```php
 $this->widget('ext.ajax-upload.EAjaxUpload', array(
