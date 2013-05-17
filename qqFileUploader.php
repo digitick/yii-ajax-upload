@@ -209,22 +209,11 @@ class qqFileUploader
 	 */
 	protected function saveToMongo(EMongoGridFS $mongoFile, $filename, $replaceOldFile)
 	{
-		if ($this->file instanceof qqUploadedFileXhr) {
-			$handle = fopen('php://input', 'rb');
-			$bytes = stream_get_contents($handle);
-			fclose($handle);
+		$bytes = $this->getFileContents();
+
+		if ($this->file instanceof qqUploadedFileForm) {
+			unlink($this->file->getTempName());
 		}
-		elseif ($this->file instanceof qqUploadedFileForm) {
-			$path = $this->file->getTempName();
-			if (is_uploaded_file($path)) {
-				$bytes = file_get_contents($path);
-				unlink($path);
-			}
-			else
-				return array('error' => 'Could not find uploaded file.');
-		}
-		else
-			return array('error' => 'Server error. No valid upload method set.');
 
 		$mongoFile->setBytes($bytes);
 
@@ -243,6 +232,32 @@ class qqFileUploader
 			'filename' => $filename,
 			'mongoId' => $mongoFile->_id->{'$id'}
 		);
+	}
+
+	/**
+	 * Get the contents of the file as a binary string.
+	 * 
+	 * Does not save or delete the file.
+	 * @return string
+	 */
+	public function getFileContents($delete = false)
+	{
+		if ($this->file instanceof qqUploadedFileXhr) {
+			$handle = fopen('php://input', 'rb');
+			$bytes = stream_get_contents($handle);
+			fclose($handle);
+			return $bytes;
+		}
+		elseif ($this->file instanceof qqUploadedFileForm) {
+			$path = $this->file->getTempName();
+			if (is_uploaded_file($path)) {
+				return file_get_contents($path);
+			}
+			else
+				return array('error' => 'Could not find uploaded file.');
+		}
+		else
+			return array('error' => 'Server error. No valid upload method set.');
 	}
 
 	/**
